@@ -5,10 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -16,11 +19,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myshop.ui.theme.MyShopTheme
 
 class MainActivity : ComponentActivity() {
@@ -48,15 +57,51 @@ data class ShoppingItem(
     var isBought: Boolean = false
 )
 
+
+class ShoppingListViewModel : ViewModel(){
+    val shoppingList = listOf(
+        ShoppingItem("Молоко"),
+        ShoppingItem("Хліб"),
+        ShoppingItem("Яйця"),
+        ShoppingItem("Масло"),
+        ShoppingItem("Ананас"),
+        ShoppingItem("Сир"),
+        ShoppingItem("Яйця"),
+        ShoppingItem("Масло"),
+        ShoppingItem("Ананас"),
+        ShoppingItem("Сир"),
+        ShoppingItem("Молоко"),
+        ShoppingItem("Хліб"),
+        ShoppingItem("Яйця"),
+        ShoppingItem("Масло"),
+        ShoppingItem("Ананас"),
+        ShoppingItem("Сир"),
+        ShoppingItem("Яйця"),
+        ShoppingItem("Масло"),
+        ShoppingItem("Ананас"),
+        ShoppingItem("Сир"),
+    )
+    fun toggleBought(index: Int) {
+        shoppingList[index].isBought = !shoppingList[index].isBought
+
+    }
+}
+
+
 @Composable
-fun ShoppingItemCard(item: ShoppingItem) {
+fun ShoppingItemCard(
+    item: ShoppingItem,
+    onToggleBought: () -> Unit = {}
+    ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .background(MaterialTheme.colorScheme.surfaceDim,
+            .background(
+                MaterialTheme.colorScheme.surfaceDim,
                 MaterialTheme.shapes.large
             )
+            .clickable { onToggleBought() }
             .padding(16.dp)
         ,
         verticalAlignment = Alignment.CenterVertically
@@ -66,12 +111,42 @@ fun ShoppingItemCard(item: ShoppingItem) {
             modifier = Modifier.weight(1f),
             fontSize = 18.sp
         )
-        Checkbox(checked = item.isBought, onCheckedChange = {})
+        Checkbox(checked = item.isBought, onCheckedChange = {
+            onToggleBought()
+        })
     }
 }
 
-@Preview(showBackground = true)
+
+@Composable
+fun ShoppingListScreen(viewModel: ShoppingListViewModel = viewModel()) {
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+            .padding(16.dp)
+    ) {
+        itemsIndexed(viewModel.shoppingList){ ix, item ->
+            ShoppingItemCard(item){
+                viewModel.toggleBought(ix)
+            }
+        }
+    }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+fun ShoppingListScreenPreview(){
+    ShoppingListScreen()
+}
+
+//@Preview(showBackground = true)
 @Composable
 fun ShoppingItemCardPreview() {
-    ShoppingItemCard(ShoppingItem("Молоко"))
+    var toggleState by remember {mutableStateOf(false)}
+    ShoppingItemCard(
+        ShoppingItem("Молоко", isBought =  toggleState)
+    ){
+            toggleState = !toggleState
+        }
+
 }
