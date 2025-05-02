@@ -10,9 +10,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
@@ -142,6 +144,13 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun deleteItem(item: ShoppingItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            dao.deleteItem(item)
+            loadShoppingList()
+        }
+    }
+
     //    val shoppingList = mutableStateListOf(
 //        ShoppingItem("Молоко"),
 //        ShoppingItem("Хліб"),
@@ -178,8 +187,9 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
 @Composable
 fun ShoppingItemCard(
     item: ShoppingItem,
-    onToggleBought: () -> Unit = {}
-    ) {
+    onToggleBought: () -> Unit = {},
+    onDelete: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -189,8 +199,7 @@ fun ShoppingItemCard(
                 MaterialTheme.shapes.large
             )
             .clickable { onToggleBought() }
-            .padding(16.dp)
-        ,
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
@@ -201,6 +210,10 @@ fun ShoppingItemCard(
         Checkbox(checked = item.isBought, onCheckedChange = {
             onToggleBought()
         })
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(onClick = onDelete) {
+            Text("Delete")
+        }
     }
 }
 
@@ -238,22 +251,29 @@ fun AddItemButton(addItem: (String) -> Unit = {}) {
 
 
 @Composable
-fun ShoppingListScreen(viewModel: ShoppingListViewModel = viewModel(
-    factory = ShoppingListViewModelFactory(LocalContext.current
-        .applicationContext as Application)
-)) {
-
+fun ShoppingListScreen(
+    viewModel: ShoppingListViewModel = viewModel(
+        factory = ShoppingListViewModelFactory(LocalContext.current.applicationContext as Application)
+    )
+) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .padding(16.dp)
     ) {
         item {
-            AddItemButton {viewModel.addItem(it)}
+            AddItemButton { viewModel.addItem(it) }
         }
-        itemsIndexed(viewModel.shoppingList){ ix, item ->
-            ShoppingItemCard(item){
-                viewModel.toggleBought(ix)
-            }
+        itemsIndexed(viewModel.shoppingList) { _, item ->
+            ShoppingItemCard(
+                item = item,
+                onToggleBought = {
+                    viewModel.toggleBought(viewModel.shoppingList.indexOf(item))
+                },
+                onDelete = {
+                    viewModel.deleteItem(item)
+                }
+            )
         }
     }
 }
